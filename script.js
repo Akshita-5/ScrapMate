@@ -1,64 +1,133 @@
-const allSideMenu = document.querySelectorAll("#sidebar .side-menu.top li a");
+const counters = document.querySelectorAll(".counter");
+const speed = 200;
 
-allSideMenu.forEach((item) => {
-  const li = item.parentElement;
+const runCounter = (counter) => {
+  const updateCount = () => {
+    const target = +counter.getAttribute("data-target");
+    const count = +counter.innerText;
+    const inc = target / speed;
+    if (count < target) {
+      // Add inc to count and output in counter
+      counter.innerText = count + inc;
+      // Call function every ms
+      setTimeout(updateCount, 1);
+    } else {
+      counter.innerText = target;
+    }
+  };
 
-  item.addEventListener("click", function () {
-    allSideMenu.forEach((i) => {
-      i.parentElement.classList.remove("active");
+  updateCount();
+};
+
+const observer = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.innerText = "0"; // Reset the counter
+        runCounter(entry.target);
+      }
     });
-    li.classList.add("active");
+  },
+  { threshold: 0.1 }
+);
+
+counters.forEach((counter) => {
+  observer.observe(counter);
+});
+
+//steps cards
+
+document.addEventListener("DOMContentLoaded", function () {
+  const cards = document.querySelectorAll(".steps-card");
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry, index) => {
+        if (entry.isIntersecting) {
+          // Reset the card's state before applying the animation
+          entry.target.style.opacity = "0";
+          entry.target.style.transform = "translateY(-50px)";
+
+          setTimeout(() => {
+            entry.target.style.opacity = "1";
+            entry.target.style.transform = "translateY(0)";
+          }, index * 200);
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.1 }
+  );
+
+  cards.forEach((card) => {
+    observer.observe(card);
   });
 });
 
-// TOGGLE SIDEBAR
-const menuBar = document.querySelector("#content nav .bx.bx-menu");
-const sidebar = document.getElementById("sidebar");
+//login form
+const showPopupLink = document.querySelector("#login-link");
+const getStartedBtn = document.querySelector(".get-started-btn");
+const formPopup = document.querySelector(".form-popup");
+const blurOverlay = document.querySelector(".blur-bg-overlay");
+const hidePopupBtn = formPopup.querySelector(".close-btn");
+const signupLoginLink = formPopup.querySelectorAll(".bottom-link a");
+const signupForm = formPopup.querySelector(".signup form");
+const passwordInput = document.querySelector("#signup-password");
+const verifyPasswordInput = document.querySelector("#verify-password");
+const passwordError = document.querySelector("#password-error");
+const verifyError = document.querySelector("#verify-error");
+const signupButton = signupForm.querySelector("button[type='submit']");
 
-menuBar.addEventListener("click", function () {
-  sidebar.classList.toggle("hide");
-});
-
-const searchButton = document.querySelector(
-  "#content nav form .form-input button"
-);
-const searchButtonIcon = document.querySelector(
-  "#content nav form .form-input button .bx"
-);
-const searchForm = document.querySelector("#content nav form");
-
-searchButton.addEventListener("click", function (e) {
-  if (window.innerWidth < 576) {
-    e.preventDefault();
-    searchForm.classList.toggle("show");
-    if (searchForm.classList.contains("show")) {
-      searchButtonIcon.classList.replace("bx-search", "bx-x");
-    } else {
-      searchButtonIcon.classList.replace("bx-x", "bx-search");
-    }
-  }
-});
-
-if (window.innerWidth < 768) {
-  sidebar.classList.add("hide");
-} else if (window.innerWidth > 576) {
-  searchButtonIcon.classList.replace("bx-x", "bx-search");
-  searchForm.classList.remove("show");
+function validatePassword(password) {
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[^\s]{6,}$/;
+  return passwordRegex.test(password);
 }
 
-window.addEventListener("resize", function () {
-  if (this.innerWidth > 576) {
-    searchButtonIcon.classList.replace("bx-x", "bx-search");
-    searchForm.classList.remove("show");
-  }
+// Show login popup
+showPopupLink.addEventListener("click", (e) => {
+  e.preventDefault();
+  document.body.classList.toggle("show-popup");
+  formPopup.classList.remove("show-signup");
+});
+getStartedBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  document.body.classList.toggle("show-popup");
+  formPopup.classList.add("show-signup");
 });
 
-const switchMode = document.getElementById("switch-mode");
+hidePopupBtn.addEventListener("click", () => {
+  document.body.classList.toggle("show-popup");
+});
 
-switchMode.addEventListener("change", function () {
-  if (this.checked) {
-    document.body.classList.add("dark");
-  } else {
-    document.body.classList.remove("dark");
+signupLoginLink.forEach((link) => {
+  link.addEventListener("click", (e) => {
+    e.preventDefault();
+    formPopup.classList[link.id === "signup-link" ? "add" : "remove"](
+      "show-signup"
+    );
+  });
+});
+signupForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  const password = passwordInput.value;
+  const verifyPassword = verifyPasswordInput.value;
+  let isValid = true;
+  passwordError.style.display = "none";
+  verifyError.style.display = "none";
+  if (!validatePassword(password)) {
+    passwordError.textContent =
+      "Password must contain at least 1 uppercase, 1 lowercase letter, 1 digit, and no spaces.";
+    passwordError.style.display = "block";
+    isValid = false;
+  }
+  if (password !== verifyPassword) {
+    verifyError.textContent = "Passwords do not match. Please try again.";
+    verifyError.style.display = "block";
+    isValid = false;
+  }
+  if (isValid) {
+    alert("Signup successful!");
+    signupForm.submit();
   }
 });
